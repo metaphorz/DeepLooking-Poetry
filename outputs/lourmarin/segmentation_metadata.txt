@@ -1,0 +1,10 @@
+Here is the RGB color range and text description for each segment in the generated segmentation map:
+
+| Segment Color (RGB) | Description/Label |
+| :--- | :--- |
+| (0, 255, 255) | Sky |
+| (0, 128, 0) | Trees |
+| (255, 255, 0) | Cliffs |
+| (255, 0, 255) | Ground |
+| (0, 0, 255) | Water |
+| (255, 0, 0) | People |

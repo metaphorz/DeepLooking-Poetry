@@ -209,6 +209,72 @@ const galleryItems = [
       if (r < 80 && b > 150) return "Tidal Creek Water";
       return null;
     }
+  },
+  {
+    id: "lourmarin",
+    title: "The Mouth of the Lourmarin River — Paul Camille Guigou, 1867",
+    thumbnail: "images/LourmarinRiver/IMG_0606.WEBP",
+    mask: "outputs/lourmarin/segmentation_mask_v3.png",
+    poemData: {
+      "Sky": {
+        title: "Ode to the West Wind",
+        poet: "Percy Bysshe Shelley",
+        image: "images/lourmarin/lourmarin_sky.png",
+        keyword: "sky",
+        text: "Thou on whose stream, mid the steep sky's commotion,\nLoose clouds like earth's decaying leaves are shed,\nShook from the tangled boughs of Heaven and Ocean,"
+      },
+      "Trees": {
+        title: "Trees",
+        poet: "Joyce Kilmer",
+        image: "images/lourmarin/lourmarin_trees.png",
+        keyword: "tree",
+        text: "Poems are made by fools like me,\nBut only God can make a tree."
+      },
+      "Cliffs": {
+        title: "The Prelude",
+        poet: "William Wordsworth",
+        image: "images/lourmarin/lourmarin_cliffs.png",
+        keyword: "cliff",
+        text: "a huge Cliff,\nAs if with voluntary power instinct,\nUpreared its head. I struck, and struck again,\nAnd, growing still in stature, the huge cliff\nRose up between me and the stars, and still\nWith measured motion, like a living thing,\nStrode after me."
+      },
+      "Meadow": {
+        title: "The Day of the Festival",
+        poet: "Victor Hugo",
+        image: "images/lourmarin/lourmarin_meadow.png",
+        keyword: "meadows",
+        text: "In the soft light couples pass,\nFamilies wander, all serene.\nOn the horizon, over there,\nIs Saint Louis' dusty keep;\nHigh above the joyful affair,\nThe sun dazzles; meadows sleep."
+      },
+      "River": {
+        title: "The Sleeper in the Valley",
+        poet: "Arthur Rimbaud",
+        image: "images/lourmarin/lourmarin_river.png",
+        keyword: "river",
+        text: "It is a green hollow where a river sings\nMadly catching on the grasses\nSilver rags; where the sun shines from the proud mountain:\nIt is a small valley which bubbles over with rays."
+      },
+      "Figures": {
+        title: "Le Voyage",
+        poet: "Charles Baudelaire",
+        image: "images/lourmarin/lourmarin_travelers.png",
+        keyword: "travelers",
+        text: "But the true travelers are those who go\nOnly to get away: hearts like balloons,\nThey never turn aside from their fatality\nAnd without knowing why they always say: \"Let's go!\""
+      },
+    },
+    getLabel: function(r, g, b) {
+      // Gemini v3 palette:
+      // Cyan (0,255,255) = Sky
+      if (g > 200 && b > 200 && r < 50) return "Sky";
+      // Yellow (255,255,0) = Cliffs
+      if (r > 200 && g > 200 && b < 50) return "Cliffs";
+      // Magenta (255,0,255) = Meadow (Ground)
+      if (r > 200 && g < 50 && b > 200) return "Meadow";
+      // Blue (0,0,255) = River (Water)
+      if (r < 50 && g < 50 && b > 200) return "River";
+      // Red (255,0,0) = Figures (People)
+      if (r > 200 && g < 50 && b < 50) return "Figures";
+      // Green (0,128,0) = Trees
+      if (r < 50 && g > 80 && g < 200 && b < 50) return "Trees";
+      return null;
+    }
   }
 ];
 
