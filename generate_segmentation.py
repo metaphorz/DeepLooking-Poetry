@@ -22,7 +22,7 @@ w, h = im.size
 print(f"Artwork size: {w} x {h}")
 
 # Step 1: Generate segmentation mask image via Nano Banana
-prompt = "create detailed segmentation of this image. Use flat solid colors only, no text or labels."
+prompt = "create detailed segmentation of this image. Use flat solid colors only. Do not include any text in the produced image."
 
 print("Requesting segmentation mask from Gemini image model...")
 
@@ -87,7 +87,7 @@ Nor any drop to drink"""
 print("\nGenerating poem-inspired images...")
 for keyword, poem_text in poems.items():
     outpath = f"outputs/poem_{keyword}.png"
-    prompt = f"Create a painterly artistic illustration inspired by this poem:\n{poem_text}"
+    prompt = f"Create a painterly artistic illustration inspired by this poem. Do not include any text in the produced image.\n{poem_text}"
     print(f"  Generating image for '{keyword}'...")
     try:
         response = client.models.generate_content(
