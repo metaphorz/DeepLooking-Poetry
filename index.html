@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Poetry Deep Looking</title>
+<title>Deep Looking</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -73,6 +73,33 @@
   .popup .poem-title a:hover {
     text-decoration: underline;
   }
+  .popup .lens-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(196,163,90,0.3);
+  }
+  .popup .lens-tab {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-family: 'Georgia', serif;
+    color: #888;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: none;
+    transition: color 0.2s, background 0.2s;
+    text-transform: capitalize;
+  }
+  .popup .lens-tab:hover {
+    color: #c4a35a;
+  }
+  .popup .lens-tab.active {
+    color: #c4a35a;
+    background: rgba(196,163,90,0.1);
+    border-color: rgba(196,163,90,0.3);
+  }
   .popup .poem-title {
     font-size: 1rem;
     font-weight: 600;
@@ -126,11 +153,24 @@
     display: block;
   }
   .gallery-item .item-title {
-    padding: 12px;
+    padding: 12px 12px 4px;
     font-size: 0.95rem;
     color: #c4a35a;
     text-align: center;
     letter-spacing: 0.05em;
+  }
+  .gallery-item .item-gallery {
+    padding: 0 12px 12px;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  .gallery-item .item-gallery a {
+    color: #888;
+    text-decoration: none;
+  }
+  .gallery-item .item-gallery a:hover {
+    color: #c4a35a;
+    text-decoration: underline;
   }
   .back-btn {
     align-self: flex-start;
@@ -158,7 +198,7 @@
 </head>
 <body>
 
-<h1>POETRY DEEP LOOKING</h1>
+<h1>DEEP LOOKING</h1>
 
 <!-- Gallery Screen -->
 <div id="gallery-screen" class="gallery">
@@ -175,6 +215,7 @@
   </div>
   <div class="popup" id="popup">
     <span class="popup-close" id="popup-close">&times;</span>
+    <div class="lens-tabs" id="lens-tabs"></div>
     <div class="poem-title" id="popup-title"></div>
     <div class="poem-poet" id="popup-poet"></div>
     <img class="poem-image" id="popup-image" alt="" style="display:none;">
@@ -186,128 +227,68 @@
 <canvas id="maskCanvas" style="display:none;"></canvas>
 
 <script>
-// --- Gallery data: one entry per artwork ---
-const galleryItems = [
-  {
-    id: "marsh",
-    title: "Marsh Boardwalk North — Stan Cottle",
-    thumbnail: "images/marsh/marsh.jpeg",
-    mask: "outputs/marsh/segmentation_mask.png",
-    poemData: {
-      "Boardwalk": {
-        title: "Boardwalk",
-        poet: "Herbert Morris",
-        url: "https://newcriterion.com/article/boardwalk/",
-        image: "images/marsh/marsh_boardwalk.png",
-        keyword: "boardwalk",
-        text: "My breath, turned smoke, is rising on the air.\nIn the background, not completely in focus,\nlies the resort itself (the sea unseen),\na mise-en-scène of small shops, baths, hotels,\nlining the boardwalk; a few scattered figures,\nfading to haze, to blur, loom in the distance,\nearly walkers like us, although it seems\nwe have the boardwalk largely to ourselves."
-      },
-      "Salt Marsh Vegetation": {
-        title: "Song of Myself",
-        poet: "Walt Whitman",
-        url: "https://www.poetryfoundation.org/poems/45477/song-of-myself-1892-version",
-        image: "images/marsh/marsh_marsh.png",
-        keyword: "marsh",
-        text: "Where band-neck'd partridges roost in a ring on the ground with their heads out,\nWhere burial coaches enter the arch'd gates of a cemetery,\nWhere winter wolves bark amid wastes of snow and icicled trees,\nWhere the yellow-crown'd heron comes to the edge of the marsh at night and feeds upon small crabs,\nWhere the splash of swimmers and divers cools the warm noon"
-      },
-      "Sky": {
-        title: "I Dwell in Possibility",
-        poet: "Emily Dickinson",
-        url: "https://www.poetryfoundation.org/poems/52197/i-dwell-in-possibility-466",
-        image: "images/marsh/marsh_sky.png",
-        keyword: "Sky",
-        text: "Of Chambers as the Cedars –\nImpregnable of eye –\nAnd for an everlasting Roof\nThe Gambrels of the Sky"
-      },
-      "Tidal Creek Water": {
-        title: "The Rime of the Ancient Mariner",
-        poet: "Samuel Taylor Coleridge",
-        url: "https://www.poetryfoundation.org/poems/43997/the-rime-of-the-ancient-mariner-text-of-1834",
-        image: "images/marsh/marsh_water.png",
-        keyword: "Water",
-        text: "Water, water, every where,\nAnd all the boards did shrink;\nWater, water, every where,\nNor any drop to drink"
-      }
-    },
-    getLabel: function(r, g, b) {
-      if (r > 110 && g < 110 && b < 60) return "Boardwalk";
-      if (g > 130 && b < 120 && r < 110) return "Salt Marsh Vegetation";
-      if (r > 90 && b > 180 && g > 140) return "Sky";
-      if (r < 80 && b > 150) return "Tidal Creek Water";
-      return null;
+// --- Parse a markdown file with key: value front-matter + body text ---
+function parsePoemMarkdown(text) {
+  const lines = text.split('\n');
+  const meta = {};
+  let bodyStart = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim() === '') {
+      bodyStart = i + 1;
+      break;
     }
-  },
-  {
-    id: "lourmarin",
-    title: "The Mouth of the Lourmarin River — Paul Camille Guigou, 1867",
-    thumbnail: "images/lourmarin/artwork.WEBP",
-    mask: "outputs/lourmarin/segmentation_mask_v3.png",
-    poemData: {
-      "Sky": {
-        title: "Ode to the West Wind",
-        poet: "Percy Bysshe Shelley",
-        url: "https://www.poetryfoundation.org/poems/45134/ode-to-the-west-wind",
-        image: "images/lourmarin/lourmarin_sky.png",
-        keyword: "sky",
-        text: "Thou on whose stream, mid the steep sky's commotion,\nLoose clouds like earth's decaying leaves are shed,\nShook from the tangled boughs of Heaven and Ocean,"
-      },
-      "Trees": {
-        title: "Trees",
-        poet: "Joyce Kilmer",
-        url: "https://www.poetryfoundation.org/poetrymagazine/poems/12744/trees",
-        image: "images/lourmarin/lourmarin_trees.png",
-        keyword: "tree",
-        text: "Poems are made by fools like me,\nBut only God can make a tree."
-      },
-      "Cliffs": {
-        title: "The Prelude",
-        poet: "William Wordsworth",
-        url: "https://www.poetryfoundation.org/poems/45542/the-prelude-book-1-childhood-and-school-time",
-        image: "images/lourmarin/lourmarin_cliffs.png",
-        keyword: "cliff",
-        text: "a huge Cliff,\nAs if with voluntary power instinct,\nUpreared its head. I struck, and struck again,\nAnd, growing still in stature, the huge cliff\nRose up between me and the stars, and still\nWith measured motion, like a living thing,\nStrode after me."
-      },
-      "Meadow": {
-        title: "A Kind of Meadow",
-        poet: "Carl Phillips",
-        url: "https://www.poetryfoundation.org/poems/47858/a-kind-of-meadow",
-        image: "images/lourmarin/lourmarin_meadow.png",
-        keyword: "meadow",
-        text: "Trespass: Halt. Who goes there?\nA kind of meadow, where it ends\nbegin trees, from whose twinning\n\nof late light and the already underway\ndarkness"
-      },
-      "River": {
-        title: "The Sleeper in the Valley",
-        poet: "Arthur Rimbaud",
-        url: "https://allpoetry.com/the-sleeper-in-the-valley",
-        image: "images/lourmarin/lourmarin_river.png",
-        keyword: "river",
-        text: "It is a green hollow where a river sings\nMadly catching on the grasses\nSilver rags; where the sun shines from the proud mountain:\nIt is a small valley which bubbles over with rays."
-      },
-      "Figures": {
-        title: "Le Voyage",
-        poet: "Charles Baudelaire",
-        url: "https://fleursdumal.org/poem/231",
-        image: "images/lourmarin/lourmarin_travelers.png",
-        keyword: "travelers",
-        text: "But the true travelers are those who go\nOnly to get away: hearts like balloons,\nThey never turn aside from their fatality\nAnd without knowing why they always say: \"Let's go!\""
-      },
-    },
-    getLabel: function(r, g, b) {
-      // Gemini v3 palette:
-      // Cyan (0,255,255) = Sky
-      if (g > 200 && b > 200 && r < 50) return "Sky";
-      // Yellow (255,255,0) = Cliffs
-      if (r > 200 && g > 200 && b < 50) return "Cliffs";
-      // Magenta (255,0,255) = Meadow (Ground)
-      if (r > 200 && g < 50 && b > 200) return "Meadow";
-      // Blue (0,0,255) = River (Water)
-      if (r < 50 && g < 50 && b > 200) return "River";
-      // Red (255,0,0) = Figures (People)
-      if (r > 200 && g < 50 && b < 50) return "Figures";
-      // Green (0,128,0) = Trees
-      if (r < 50 && g > 80 && g < 200 && b < 50) return "Trees";
-      return null;
+    const colon = line.indexOf(':');
+    if (colon > 0) {
+      const key = line.substring(0, colon).trim();
+      const val = line.substring(colon + 1).trim();
+      meta[key] = val;
     }
   }
-];
+  meta.text = lines.slice(bodyStart).join('\n').trim();
+  return meta;
+}
+
+// --- Build a getLabel function from manifest colorRules ---
+function buildGetLabel(segments) {
+  return function(r, g, b) {
+    for (const seg of segments) {
+      const rule = seg.colorRule;
+      let match = true;
+      if (rule.r_gt !== undefined && !(r > rule.r_gt)) match = false;
+      if (rule.r_lt !== undefined && !(r < rule.r_lt)) match = false;
+      if (rule.g_gt !== undefined && !(g > rule.g_gt)) match = false;
+      if (rule.g_lt !== undefined && !(g < rule.g_lt)) match = false;
+      if (rule.b_gt !== undefined && !(b > rule.b_gt)) match = false;
+      if (rule.b_lt !== undefined && !(b < rule.b_lt)) match = false;
+      if (match) return seg.label;
+    }
+    return null;
+  };
+}
+
+// --- Highlight keyword in poem text using DOM (safe, no innerHTML) ---
+function setHighlightedText(container, text, keyword) {
+  container.textContent = '';
+  if (!keyword) {
+    container.textContent = text;
+    return;
+  }
+  const regex = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  const parts = text.split(regex);
+  for (const part of parts) {
+    if (regex.test(part)) {
+      regex.lastIndex = 0;
+      const span = document.createElement('span');
+      span.style.color = '#e8913a';
+      span.style.fontWeight = '600';
+      span.textContent = part;
+      container.appendChild(span);
+    } else {
+      container.appendChild(document.createTextNode(part));
+    }
+  }
+}
 
 // --- DOM references ---
 const galleryScreen = document.getElementById('gallery-screen');
@@ -317,6 +298,7 @@ const backBtn = document.getElementById('back-btn');
 const viewerSubtitle = document.getElementById('viewer-subtitle');
 const artworkEl = document.getElementById('artwork');
 const popup = document.getElementById('popup');
+const lensTabs = document.getElementById('lens-tabs');
 const popupTitle = document.getElementById('popup-title');
 const popupPoet = document.getElementById('popup-poet');
 const popupImage = document.getElementById('popup-image');
@@ -325,37 +307,60 @@ const maskCanvas = document.getElementById('maskCanvas');
 const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
 
 // --- Active viewer state ---
-let activePoemData = null;
+let activeLensData = null;  // label -> [{lens, title, poet, url, image, keyword, text}, ...]
 let activeGetLabel = null;
+let activeBasePath = null;
 let currentLabel = null;
+let currentLensIndex = 0;
 let pinned = false;
 let pinnedData = null;
 
-// --- Build gallery thumbnails ---
-galleryItems.forEach(item => {
-  const div = document.createElement('div');
-  div.className = 'gallery-item';
-  const img = document.createElement('img');
-  img.src = item.thumbnail;
-  img.alt = item.title;
-  const titleDiv = document.createElement('div');
-  titleDiv.className = 'item-title';
-  titleDiv.textContent = item.title;
-  div.appendChild(img);
-  div.appendChild(titleDiv);
-  div.addEventListener('click', () => openViewer(item));
-  galleryGrid.appendChild(div);
-});
+// --- Load gallery from manifests ---
+async function loadGallery() {
+  const galleryResp = await fetch('images/gallery.json');
+  const imageIds = await galleryResp.json();
+
+  for (const id of imageIds) {
+    const basePath = 'images/' + id;
+    const manifestResp = await fetch(basePath + '/manifest.json');
+    const manifest = await manifestResp.json();
+
+    const div = document.createElement('div');
+    div.className = 'gallery-item';
+    const img = document.createElement('img');
+    img.src = basePath + '/' + manifest.image;
+    img.alt = manifest.title;
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'item-title';
+    titleDiv.textContent = manifest.title;
+    div.appendChild(img);
+    div.appendChild(titleDiv);
+    if (manifest.gallery && manifest.galleryUrl) {
+      const galleryLink = document.createElement('div');
+      galleryLink.className = 'item-gallery';
+      const a = document.createElement('a');
+      a.href = manifest.galleryUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = manifest.gallery;
+      a.addEventListener('click', (e) => e.stopPropagation());
+      galleryLink.appendChild(a);
+      div.appendChild(galleryLink);
+    }
+    div.addEventListener('click', () => openViewer(manifest, basePath));
+    galleryGrid.appendChild(div);
+  }
+}
 
 // --- Open viewer for a given gallery item ---
-function openViewer(item) {
-  activePoemData = item.poemData;
-  activeGetLabel = item.getLabel;
+async function openViewer(manifest, basePath) {
+  activeBasePath = basePath;
+  activeGetLabel = buildGetLabel(manifest.segments);
   currentLabel = null;
 
-  artworkEl.src = item.thumbnail;
-  artworkEl.alt = item.title;
-  viewerSubtitle.textContent = 'Hover over regions to explore \u2014 ' + item.title;
+  artworkEl.src = basePath + '/' + manifest.image;
+  artworkEl.alt = manifest.title;
+  viewerSubtitle.textContent = 'Hover over regions to explore \u2014 ' + manifest.title;
 
   // Load mask
   const maskImg = new Image();
@@ -363,9 +368,39 @@ function openViewer(item) {
     maskCanvas.width = maskImg.width;
     maskCanvas.height = maskImg.height;
     maskCtx.drawImage(maskImg, 0, 0);
-    console.log('Mask loaded: ' + maskImg.width + ' x ' + maskImg.height);
   };
-  maskImg.src = item.mask;
+  maskImg.src = basePath + '/' + manifest.mask;
+
+  // Load lens data from markdown files for each segment
+  const lensData = {};
+  for (const seg of manifest.segments) {
+    const lenses = [];
+    for (const lens of seg.lenses) {
+      const mdPath = basePath + '/' + seg.dir + '/' + lens + '/' + seg.dir + '.md';
+      try {
+        const resp = await fetch(mdPath);
+        if (resp.ok) {
+          const text = await resp.text();
+          const meta = parsePoemMarkdown(text);
+          lenses.push({
+            lens: lens,
+            title: meta.title,
+            poet: meta.poet,
+            url: meta.url,
+            image: meta.image ? basePath + '/' + seg.dir + '/' + lens + '/' + meta.image : '',
+            keyword: meta.keyword,
+            text: meta.text
+          });
+        }
+      } catch (e) {
+        console.warn('Could not load ' + mdPath, e);
+      }
+    }
+    if (lenses.length > 0) {
+      lensData[seg.label] = lenses;
+    }
+  }
+  activeLensData = lensData;
 
   galleryScreen.classList.add('hidden');
   viewerScreen.classList.remove('hidden');
@@ -395,9 +430,58 @@ function positionPopup(clientX, clientY) {
   popup.style.top = top + 'px';
 }
 
+// --- Display a specific lens in the popup ---
+function showLensContent(data) {
+  popupTitle.textContent = data.title || '';
+  popupPoet.textContent = data.poet || '';
+  if (data.image) {
+    popupImage.src = data.image;
+    popupImage.alt = data.title || '';
+    popupImage.style.display = 'block';
+  } else {
+    popupImage.style.display = 'none';
+  }
+  setHighlightedText(popupText, data.text, data.keyword);
+}
+
+// --- Build tab bar for a segment's lenses ---
+function buildTabs(lenses, activeIndex) {
+  lensTabs.textContent = '';
+  if (lenses.length <= 1) {
+    lensTabs.style.display = 'none';
+    return;
+  }
+  lensTabs.style.display = 'flex';
+  lenses.forEach((lensObj, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'lens-tab' + (i === activeIndex ? ' active' : '');
+    tab.textContent = lensObj.lens;
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentLensIndex = i;
+      showLensContent(lenses[i]);
+      // Update active tab styling
+      lensTabs.querySelectorAll('.lens-tab').forEach((t, j) => {
+        t.classList.toggle('active', j === i);
+      });
+      // If pinned, update the hyperlink on the title
+      if (pinned && lenses[i].url) {
+        popupTitle.textContent = '';
+        const link = document.createElement('a');
+        link.href = lenses[i].url;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = lenses[i].title;
+        popupTitle.appendChild(link);
+      }
+    });
+    lensTabs.appendChild(tab);
+  });
+}
+
 // --- Hover interaction ---
 artworkEl.addEventListener('mousemove', (e) => {
-  if (!activePoemData || !activeGetLabel) return;
+  if (!activeLensData || !activeGetLabel) return;
   if (pinned) return;
 
   const rect = artworkEl.getBoundingClientRect();
@@ -409,17 +493,12 @@ artworkEl.addEventListener('mousemove', (e) => {
   const pixel = maskCtx.getImageData(maskX, maskY, 1, 1).data;
   const label = activeGetLabel(pixel[0], pixel[1], pixel[2]);
 
-  if (label && activePoemData[label]) {
+  if (label && activeLensData[label] && activeLensData[label].length > 0) {
     if (label !== currentLabel) {
-      const data = activePoemData[label];
-      popupTitle.textContent = data.title;
-      popupPoet.textContent = data.poet;
-      popupImage.src = data.image;
-      popupImage.alt = data.title;
-      popupImage.style.display = 'block';
-      const escaped = data.text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-      const highlighted = escaped.replace(new RegExp('(' + data.keyword + ')', 'gi'), '<span style="color:#e8913a;font-weight:600">$1</span>');
-      popupText.innerHTML = highlighted;  // safe: content is from hardcoded data only
+      const lenses = activeLensData[label];
+      currentLensIndex = 0;
+      buildTabs(lenses, 0);
+      showLensContent(lenses[0]);
       currentLabel = label;
     }
     popup.classList.add('visible');
@@ -439,12 +518,12 @@ artworkEl.addEventListener('mouseleave', () => {
 // --- Click to pin popup ---
 artworkEl.addEventListener('click', () => {
   if (pinned || !popup.classList.contains('visible') || !currentLabel) return;
-  const data = activePoemData[currentLabel];
-  if (!data) return;
+  const lenses = activeLensData[currentLabel];
+  if (!lenses || lenses.length === 0) return;
+  const data = lenses[currentLensIndex];
   pinned = true;
   pinnedData = data;
   popup.classList.add('pinned');
-  // Replace title text with hyperlink using DOM methods
   if (data.url) {
     popupTitle.textContent = '';
     const link = document.createElement('a');
@@ -464,6 +543,9 @@ document.getElementById('popup-close').addEventListener('click', () => {
   popup.classList.remove('visible');
   currentLabel = null;
 });
+
+// --- Initialize ---
+loadGallery();
 </script>
 </body>
 </html>

@@ -1,0 +1,34 @@
+{
+  "id": "marsh",
+  "title": "Marsh Boardwalk North — Stan Cottle",
+  "gallery": "Story & Song Center for Arts and Culture",
+  "galleryUrl": "https://storyandsongarts.org/",
+  "image": "marsh.jpeg",
+  "mask": "segmentation_mask.png",
+  "segments": [
+    {
+      "label": "Boardwalk",
+      "dir": "boardwalk",
+      "lenses": ["poetry", "math"],
+      "colorRule": { "r_gt": 110, "g_lt": 110, "b_lt": 60 }
+    },
+    {
+      "label": "Salt Marsh Vegetation",
+      "dir": "marsh",
+      "lenses": ["poetry"],
+      "colorRule": { "g_gt": 130, "b_lt": 120, "r_lt": 110 }
+    },
+    {
+      "label": "Sky",
+      "dir": "sky",
+      "lenses": ["poetry"],
+      "colorRule": { "r_gt": 90, "b_gt": 180, "g_gt": 140 }
+    },
+    {
+      "label": "Tidal Creek Water",
+      "dir": "water",
+      "lenses": ["poetry"],
+      "colorRule": { "r_lt": 80, "b_gt": 150 }
+    }
+  ]
+}
