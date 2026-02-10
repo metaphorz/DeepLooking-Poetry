@@ -112,10 +112,28 @@
     margin-bottom: 10px;
     font-style: italic;
   }
-  .popup .poem-image {
+  .popup .poem-image, .popup .poem-video {
     width: 100%;
     border-radius: 6px;
     margin-bottom: 10px;
+  }
+  .image-lightbox {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    cursor: none;
+  }
+  .image-lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
   }
   .popup .poem-text {
     font-size: 0.85rem;
@@ -219,8 +237,14 @@
     <div class="poem-title" id="popup-title"></div>
     <div class="poem-poet" id="popup-poet"></div>
     <img class="poem-image" id="popup-image" alt="" style="display:none;">
+    <video class="poem-video" id="popup-video" controls autoplay loop muted style="display:none;"></video>
     <div class="poem-text" id="popup-text"></div>
   </div>
+</div>
+
+<!-- Image lightbox overlay -->
+<div class="image-lightbox" id="lightbox" style="display:none;">
+  <img id="lightbox-img" src="" alt="">
 </div>
 
 <!-- Hidden canvas for reading segmentation mask pixels -->
@@ -302,6 +326,7 @@ const lensTabs = document.getElementById('lens-tabs');
 const popupTitle = document.getElementById('popup-title');
 const popupPoet = document.getElementById('popup-poet');
 const popupImage = document.getElementById('popup-image');
+const popupVideo = document.getElementById('popup-video');
 const popupText = document.getElementById('popup-text');
 const maskCanvas = document.getElementById('maskCanvas');
 const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
@@ -317,12 +342,13 @@ let pinnedData = null;
 
 // --- Load gallery from manifests ---
 async function loadGallery() {
-  const galleryResp = await fetch('images/gallery.json');
+  const cacheBust = '?t=' + Date.now();
+  const galleryResp = await fetch('images/gallery.json' + cacheBust);
   const imageIds = await galleryResp.json();
 
   for (const id of imageIds) {
     const basePath = 'images/' + id;
-    const manifestResp = await fetch(basePath + '/manifest.json');
+    const manifestResp = await fetch(basePath + '/manifest.json' + cacheBust);
     const manifest = await manifestResp.json();
 
     const div = document.createElement('div');
@@ -373,12 +399,13 @@ async function openViewer(manifest, basePath) {
 
   // Load lens data from markdown files for each segment
   const lensData = {};
+  const cb = '?t=' + Date.now();
   for (const seg of manifest.segments) {
     const lenses = [];
     for (const lens of seg.lenses) {
       const mdPath = basePath + '/' + seg.dir + '/' + lens + '/' + seg.dir + '.md';
       try {
-        const resp = await fetch(mdPath);
+        const resp = await fetch(mdPath + cb);
         if (resp.ok) {
           const text = await resp.text();
           const meta = parsePoemMarkdown(text);
@@ -388,6 +415,7 @@ async function openViewer(manifest, basePath) {
             poet: meta.poet,
             url: meta.url,
             image: meta.image ? basePath + '/' + seg.dir + '/' + lens + '/' + meta.image : '',
+            video: meta.video ? basePath + '/' + seg.dir + '/' + lens + '/' + meta.video : '',
             keyword: meta.keyword,
             text: meta.text
           });
@@ -434,12 +462,22 @@ function positionPopup(clientX, clientY) {
 function showLensContent(data) {
   popupTitle.textContent = data.title || '';
   popupPoet.textContent = data.poet || '';
-  if (data.image) {
+  if (data.video) {
+    popupVideo.src = data.video;
+    popupVideo.load();
+    popupVideo.play();
+    popupVideo.style.display = 'block';
+    popupImage.style.display = 'none';
+  } else if (data.image) {
     popupImage.src = data.image;
     popupImage.alt = data.title || '';
     popupImage.style.display = 'block';
+    popupVideo.style.display = 'none';
+    popupVideo.src = '';
   } else {
     popupImage.style.display = 'none';
+    popupVideo.style.display = 'none';
+    popupVideo.src = '';
   }
   setHighlightedText(popupText, data.text, data.keyword);
 }
@@ -455,7 +493,8 @@ function buildTabs(lenses, activeIndex) {
   lenses.forEach((lensObj, i) => {
     const tab = document.createElement('button');
     tab.className = 'lens-tab' + (i === activeIndex ? ' active' : '');
-    tab.textContent = lensObj.lens;
+    const lensDisplayNames = { cs: 'Comp Sci', language: 'Language', geology: 'Geology', matsci: 'Material Sci', botany: 'Botany', cinematography: 'Cinema' };
+    tab.textContent = lensDisplayNames[lensObj.lens] || lensObj.lens;
     tab.addEventListener('click', (e) => {
       e.stopPropagation();
       currentLensIndex = i;
@@ -496,9 +535,10 @@ artworkEl.addEventListener('mousemove', (e) => {
   if (label && activeLensData[label] && activeLensData[label].length > 0) {
     if (label !== currentLabel) {
       const lenses = activeLensData[label];
-      currentLensIndex = 0;
-      buildTabs(lenses, 0);
-      showLensContent(lenses[0]);
+      const randomIndex = lenses.length > 1 ? Math.floor(Math.random() * lenses.length) : 0;
+      currentLensIndex = randomIndex;
+      buildTabs(lenses, randomIndex);
+      showLensContent(lenses[randomIndex]);
       currentLabel = label;
     }
     popup.classList.add('visible');
@@ -542,6 +582,21 @@ document.getElementById('popup-close').addEventListener('click', () => {
   popup.classList.remove('pinned');
   popup.classList.remove('visible');
   currentLabel = null;
+});
+
+// --- Image lightbox: hover to enlarge, mouse move to dismiss ---
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+
+popupImage.addEventListener('mouseenter', () => {
+  if (!popupImage.src || popupImage.style.display === 'none') return;
+  lightboxImg.src = popupImage.src;
+  lightboxImg.alt = popupImage.alt;
+  lightbox.style.display = 'flex';
+});
+
+lightbox.addEventListener('mousemove', () => {
+  lightbox.style.display = 'none';
 });
 
 // --- Initialize ---

@@ -1,7 +1,7 @@
 title: Geometry of the Boardwalk
 poet:
-url:
-image:
+url: https://en.wikipedia.org/wiki/Spline_(mathematics)
+image: spline_interpolation.png
 keyword: boardwalk
 
-The boardwalk follows a linear path through the marsh, creating a one-dimensional trajectory through a two-dimensional landscape. The planks form a repeating rectangular tessellation. The railing posts are evenly spaced, approximating a discrete sampling of the continuous curve of the walkway. The vanishing point where parallel edges converge illustrates projective geometry.
+The boardwalk curves gently through the marsh. In math, a smooth curve like this is called a spline. The red dots in the diagram are like the railing posts on the boardwalk — a few fixed points along the path. The smooth black line is the curve that connects them. A spline finds the smoothest possible path through a set of points, just like a boardwalk railing bends smoothly from post to post.

@@ -15,13 +15,13 @@
     {
       "label": "Salt Marsh Vegetation",
       "dir": "marsh",
-      "lenses": ["poetry"],
+      "lenses": ["poetry", "cs", "language"],
       "colorRule": { "g_gt": 130, "b_lt": 120, "r_lt": 110 }
     },
     {
       "label": "Sky",
       "dir": "sky",
-      "lenses": ["poetry"],
+      "lenses": ["poetry", "physics"],
       "colorRule": { "r_gt": 90, "b_gt": 180, "g_gt": 140 }
     },
     {

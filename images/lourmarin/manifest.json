@@ -9,19 +9,19 @@
     {
       "label": "Sky",
       "dir": "sky",
-      "lenses": ["poetry"],
+      "lenses": ["poetry", "matsci"],
       "colorRule": { "g_gt": 200, "b_gt": 200, "r_lt": 50 }
     },
     {
       "label": "Cliffs",
       "dir": "cliffs",
-      "lenses": ["poetry"],
+      "lenses": ["poetry", "geology"],
       "colorRule": { "r_gt": 200, "g_gt": 200, "b_lt": 50 }
     },
     {
       "label": "Meadow",
       "dir": "meadow",
-      "lenses": ["poetry"],
+      "lenses": ["poetry", "botany"],
       "colorRule": { "r_gt": 200, "g_lt": 50, "b_gt": 200 }
     },
     {
@@ -33,7 +33,7 @@
     {
       "label": "Figures",
       "dir": "figures",
-      "lenses": ["poetry"],
+      "lenses": ["poetry", "cinematography"],
       "colorRule": { "r_gt": 200, "g_lt": 50, "b_lt": 50 }
     },
     {
