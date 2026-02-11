@@ -53,7 +53,21 @@
     box-shadow: 0 8px 32px rgba(0,0,0,0.6);
   }
   .popup.visible { opacity: 1; }
-  .popup.pinned { pointer-events: auto; }
+  .popup.pinned {
+    pointer-events: auto;
+    resize: both;
+    overflow: auto;
+    min-width: 280px;
+  }
+  .popup.pinned::-webkit-resizable {
+    background: #c4a35a;
+  }
+  .popup.pinned .lens-tabs {
+    cursor: grab;
+  }
+  .popup.dragging .lens-tabs {
+    cursor: grabbing;
+  }
   .popup-close {
     position: absolute;
     top: 8px;
@@ -597,6 +611,25 @@ popupImage.addEventListener('mouseenter', () => {
 
 lightbox.addEventListener('mousemove', () => {
   lightbox.style.display = 'none';
+});
+
+// --- Draggable pinned popup ---
+let dragging = false, dragOffX = 0, dragOffY = 0;
+lensTabs.addEventListener('mousedown', (e) => {
+  if (!pinned || e.target.classList.contains('lens-tab')) return;
+  dragging = true;
+  dragOffX = e.clientX - popup.getBoundingClientRect().left;
+  dragOffY = e.clientY - popup.getBoundingClientRect().top;
+  popup.classList.add('dragging');
+  e.preventDefault();
+});
+document.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  popup.style.left = (e.clientX - dragOffX) + 'px';
+  popup.style.top = (e.clientY - dragOffY) + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (dragging) { dragging = false; popup.classList.remove('dragging'); }
 });
 
 // --- Initialize ---
