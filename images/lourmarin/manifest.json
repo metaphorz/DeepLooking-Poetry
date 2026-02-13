@@ -5,7 +5,7 @@
   "galleryUrl": "https://www.cummermuseum.org/",
   "image": "artwork.WEBP",
   "mask": "segmentation_mask.png",
-  "imageLenses": ["cinematography"],
+  "imageLenses": ["cinematography", "art"],
   "segments": [
     {
       "label": "Sky",
