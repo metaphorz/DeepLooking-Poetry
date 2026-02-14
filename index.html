@@ -339,7 +339,7 @@
   <div class="about-box">
     <span class="about-close" id="about-close">&times;</span>
     <h2>DEEP LOOKING</h2>
-    What do you see when you experience reality? Your experience is captured by an image or perhaps multiple images in a video. Within these artifacts, one can use multiple lenses for greater insight into looking. We associate a lens as a category or element of knowledge classification (classes you took in school, or phrases in a Dewey Decimal system or Library of Congress). Let's call this Deep Looking.
+    What do you see when you experience reality? Your experience is captured by an image or perhaps multiple images in a video. Within these artifacts, one can use multiple lenses for greater insight into looking. We define a lens as a category or element of knowledge classification (classes you took in school, or phrases in a Dewey Decimal system or Library of Congress). We call this Deep Looking. As you go about your day, take time to reflect on what you are seeing and ask questions. Many questions and answers to questions are rooted in academic subjects (disciplines).
   </div>
 </div>
 
@@ -532,6 +532,7 @@ async function openViewer(manifest, basePath) {
             url: meta.url,
             image: meta.image ? basePath + '/' + seg.dir + '/' + lens + '/' + meta.image : '',
             video: meta.video ? basePath + '/' + seg.dir + '/' + lens + '/' + meta.video : '',
+            youtube: meta.youtube || '',
             keyword: meta.keyword,
             text: meta.text
           });
@@ -564,6 +565,7 @@ async function openViewer(manifest, basePath) {
             url: meta.url,
             image: meta.image ? lensDir + '/' + meta.image : '',
             video: meta.video ? lensDir + '/' + meta.video : '',
+            youtube: meta.youtube || '',
             keyword: meta.keyword,
             text: meta.text
           });
@@ -653,6 +655,14 @@ function createPopup(lenses, posX, posY) {
   vidEl.className = 'poem-video';
   vidEl.controls = true; vidEl.autoplay = true; vidEl.loop = true; vidEl.muted = true;
   vidEl.style.display = 'none';
+  const ytEl = document.createElement('iframe');
+  ytEl.className = 'poem-video';
+  ytEl.style.display = 'none';
+  ytEl.style.border = 'none';
+  ytEl.style.width = '100%';
+  ytEl.style.aspectRatio = '16/9';
+  ytEl.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  ytEl.allowFullscreen = true;
   const textEl = document.createElement('div');
   textEl.className = 'poem-text';
 
@@ -662,6 +672,7 @@ function createPopup(lenses, posX, posY) {
   el.appendChild(poetEl);
   el.appendChild(imgEl);
   el.appendChild(vidEl);
+  el.appendChild(ytEl);
   el.appendChild(textEl);
 
   // Show lens content in this popup
@@ -676,20 +687,23 @@ function createPopup(lenses, posX, posY) {
       titleEl.textContent = data.title || '';
     }
     poetEl.textContent = data.poet || '';
-    if (data.video) {
+    if (data.youtube) {
+      ytEl.src = data.youtube; ytEl.style.display = 'block';
+      vidEl.style.display = 'none'; vidEl.src = ''; imgEl.style.display = 'none';
+    } else if (data.video) {
       vidEl.src = data.video; vidEl.load(); vidEl.play();
-      vidEl.style.display = 'block'; imgEl.style.display = 'none';
+      vidEl.style.display = 'block'; imgEl.style.display = 'none'; ytEl.style.display = 'none'; ytEl.src = '';
     } else if (data.image) {
       imgEl.src = data.image; imgEl.alt = data.title || '';
-      imgEl.style.display = 'block'; vidEl.style.display = 'none'; vidEl.src = '';
+      imgEl.style.display = 'block'; vidEl.style.display = 'none'; vidEl.src = ''; ytEl.style.display = 'none'; ytEl.src = '';
     } else {
-      imgEl.style.display = 'none'; vidEl.style.display = 'none'; vidEl.src = '';
+      imgEl.style.display = 'none'; vidEl.style.display = 'none'; vidEl.src = ''; ytEl.style.display = 'none'; ytEl.src = '';
     }
     setHighlightedText(textEl, data.text, data.keyword);
   }
 
   // Build tabs
-  const lensDisplayNames = { cs: 'Comp Sci', language: 'Language', geology: 'Geology', matsci: 'Material Sci', botany: 'Botany', cinematography: 'Cinema', modeling: 'Modeling', art: 'Art', ancienthistory: 'Ancient History' };
+  const lensDisplayNames = { cs: 'Comp Sci', language: 'Language', geology: 'Geology', matsci: 'Material Sci', botany: 'Botany', cinematography: 'Cinema', modeling: 'Modeling', art: 'Art', ancienthistory: 'Ancient History', education: 'Education' };
   lenses.forEach((lensObj, i) => {
     const tab = document.createElement('button');
     tab.className = 'lens-tab' + (i === 0 ? ' active' : '');

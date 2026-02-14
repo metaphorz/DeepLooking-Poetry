@@ -10,7 +10,7 @@
     {
       "label": "Sky",
       "dir": "sky",
-      "lenses": ["poetry", "matsci"],
+      "lenses": ["poetry", "matsci", "education"],
       "colorRule": { "g_gt": 200, "b_gt": 200, "r_lt": 50 }
     },
     {
